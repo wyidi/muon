@@ -79,3 +79,35 @@ mu0_execute STP = Nothing
 
 mu0_ISA :: MU0_Instruction -> Maybe (MU0_State -> MU0_State) 
 mu0_ISA ir = (mu0_decode ir) >>= mu0_execute
+
+--Interface functions--
+
+mu0_cycle :: MU0_State -> Maybe MU0_State
+mu0_cycle st = (mu0_ISA . mu0_fetch) st >>= (\f -> Just $ f $ st)
+
+mu0_getStateList :: MU0_State -> [Maybe MU0_State]
+mu0_getStateList st = stateList
+                    where stateList = (Just st):map (\x -> x >>= mu0_cycle) stateList
+
+mu0Peek :: Word12 -> MU0_State -> Word16
+mu0Peek addr st  = (getMU0_Memory $ memory $ st) ! addr
+
+mu0_getState :: [Word16] -> Maybe MU0_State
+mu0_getState ms
+    | size > 4096 = Nothing
+    | size == 0   = Just $ MU0_State {register=rI,memory=mkMU0_Memory $ array (1,0) []}
+    | otherwise   = let endIx = fromIntegral $ (size-1)
+                        lst = zip [0..endIx] ms
+                        mI = mkMU0_Memory $ array (0,endIx) lst
+                    in Just $ MU0_State {register=rI,memory=mI}
+    where size = length ms
+          rI = MU0_Register {pc=0, acc=0} 
+
+readWordAt :: Int -> Word16 -> [Maybe MU0_State] -> Maybe Word16
+readWordAt x y lst = lst !! x >>= Just . (mu0Peek y)
+
+readaccAt :: Int -> [Maybe MU0_State] -> Maybe Int32
+readaccAt x lst = lst !! x >>= Just . acc . register
+
+readpcAt :: Int -> [Maybe MU0_State] -> Maybe Word16
+readpcAt x lst = lst !! x >>= Just . pc . register 
