@@ -71,9 +71,9 @@ mu0_execute (LDA op) = Just $ mu0_step . \st -> (st {register = ((register st) {
 mu0_execute (STO op) = Just $ mu0_step . \st -> (st {memory = MU0_Memory ((getMU0_Memory $ memory $ st) // [(op, fromIntegral $ acc $ register $ st)])})
 mu0_execute (ADD op) = Just $ mu0_step . \st -> (st {register = ((register st) {acc = (acc $ register $ st) + (fromIntegral $ (getMU0_Memory $ memory $ st) ! op)})})
 mu0_execute (SUB op) = Just $ mu0_step . \st -> (st {register = ((register st) {acc = (acc $ register $ st) - (fromIntegral $ (getMU0_Memory $ memory $ st) ! op)})})
-mu0_execute (JMP op) = Just $ mu0_step . \st -> (st {register = ((register st) {pc = op})})
-mu0_execute (JGE op) = Just $ mu0_step . \st -> if (acc $ register $ st) >= 0 then (st {register = ((register st) {pc = op})}) else st
-mu0_execute (JNE op) = Just $ mu0_step . \st -> if (acc $ register $ st) /= 0 then (st {register = ((register st) {pc = op})}) else st
+mu0_execute (JMP op) = Just $  \st -> (st {register = ((register st) {pc = op})})
+mu0_execute (JGE op) = Just $  \st -> if (acc $ register $ st) >= 0 then (st {register = ((register st) {pc = op})}) else mu0_step st
+mu0_execute (JNE op) = Just $  \st -> if (acc $ register $ st) /= 0 then (st {register = ((register st) {pc = op})}) else mu0_step st
 mu0_execute STP = Nothing
 
 
